@@ -7,12 +7,15 @@ import (
 	"os"
 )
 
+// BufferedReader implements equality checks for io.Reader .
 type BufferedReader struct {
 	bufSize int64
 	bufA    []byte
 	bufB    []byte
 }
 
+// NewBufferedReader returns a BufferedReader initialized with the given buffers of the given size.
+// Usually there is no need to instantiate it yourself, use the DefaultBufferedReader instead.
 func NewBufferedReader(bufSize int64) *BufferedReader {
 	if bufSize < 1 {
 		panic("bufSize must be > 0")
@@ -24,8 +27,10 @@ func NewBufferedReader(bufSize int64) *BufferedReader {
 	}
 }
 
+// DefaultReadBufferSize is the buffer size used for the DefaultBufferedReader .
 const DefaultReadBufferSize = 4 * 1024
 
+// DefaultBufferedReader is a BufferedReader initialized with buffers of the DefaultReadBufferSize .
 var DefaultBufferedReader = NewBufferedReader(DefaultReadBufferSize)
 
 // FilesEqual returns true if both files are equal, i.e. if both store the same bytes.
