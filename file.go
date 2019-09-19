@@ -6,6 +6,27 @@ import (
 	"os"
 )
 
+type BufferedReader struct {
+	bufSize int64
+	bufA    []byte
+	bufB    []byte
+}
+
+func NewBufferedReader(bufSize int64) *BufferedReader {
+	if bufSize < 1 {
+		panic("bufSize must be > 0")
+	}
+	return &BufferedReader{
+		bufSize: bufSize,
+		bufA:    make([]byte, bufSize),
+		bufB:    make([]byte, bufSize),
+	}
+}
+
+const DefaultReadBufferSize = 4 * 1024
+
+var DefaultBufferedReader = NewBufferedReader(DefaultReadBufferSize)
+
 // FilesEqual returns true if both files are equal, i.e. if both store the same bytes.
 func FilesEqual(fileA, fileB string) (bool, error) {
 	a, err := os.Open(fileA)
@@ -35,29 +56,21 @@ func FilesEqual(fileA, fileB string) (bool, error) {
 	if aInfo.Size() != bInfo.Size() {
 		return false, nil
 	}
-	return ReaderEqual(a, b, DefaultReadBufferSize)
+	return DefaultBufferedReader.ReaderEqual(a, b)
 }
 
-const DefaultReadBufferSize = 4 * 1024
-
 // ReaderEqual returns true if both readers returned the same bytes.
-func ReaderEqual(a, b io.Reader, bufSize int64) (bool, error) {
+func (br *BufferedReader) ReaderEqual(a, b io.Reader) (bool, error) {
 	if a == nil || b == nil {
 		return false, errors.New("either reader a or b is nil")
 	}
-	if bufSize < 1 {
-		return false, errors.New("bufSize must be > 0")
-	}
-
-	aBuf := make([]byte, bufSize)
-	bBuf := make([]byte, bufSize)
 
 	for {
-		nA, err := a.Read(aBuf)
+		nA, err := a.Read(br.bufA)
 		if err != nil && err != io.EOF {
 			return false, err
 		}
-		nB, err := b.Read(bBuf)
+		nB, err := b.Read(br.bufB)
 		if err != nil && err != io.EOF {
 			return false, err
 		}
@@ -68,7 +81,7 @@ func ReaderEqual(a, b io.Reader, bufSize int64) (bool, error) {
 			return true, nil
 		}
 		for idx := 0; idx < nA; idx++ {
-			if aBuf[idx] != bBuf[idx] {
+			if br.bufA[idx] != br.bufB[idx] {
 				return false, nil
 			}
 		}
