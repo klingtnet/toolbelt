@@ -1,4 +1,4 @@
-.PHONY: all check test lint fmt
+.PHONY: all check test lint fmt bench
 
 GO_FILES:=$(shell find -type f -iname '*.go')
 
@@ -14,3 +14,6 @@ fmt: $(GO_FILES)
 
 lint: $(GO_FILES)
 	golangci-lint run .
+
+bench:
+	go test -bench .
