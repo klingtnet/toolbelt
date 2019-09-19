@@ -3,6 +3,7 @@ package toolbelt
 import (
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -86,4 +87,42 @@ func (br *BufferedReader) ReaderEqual(a, b io.Reader) (bool, error) {
 			}
 		}
 	}
+}
+
+// ReplaceFile overwrites a file atomically by first creating a temporary file with the given data
+// and afterwards replacing the destination with temporary file.
+// File permissions of the destination are kept.
+// The destination is unchanged if an intermediate error occurs.
+func ReplaceFile(data io.Reader, dest string) error {
+	destInfo, err := os.Stat(dest)
+	if err != nil {
+		return err
+	}
+
+	f, err := ioutil.TempFile("", "toolbelt")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	err = os.Chmod(f.Name(), destInfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(f, data)
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(f.Name(), dest)
+}
+
+// CloseAndRemove first closes the given file and secondly deletes it.
+func CloseAndRemove(f *os.File) error {
+	err := f.Close()
+	if err != nil {
+		return err
+	}
+	return os.Remove(f.Name())
 }

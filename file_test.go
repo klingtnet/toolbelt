@@ -1,6 +1,8 @@
 package toolbelt
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -79,5 +81,53 @@ func TestFilesEqual(t *testing.T) {
 				t.Fatalf("expected equal %t but was %t", tCase.equal, equal)
 			}
 		})
+	}
+}
+
+func TestReplaceFile(t *testing.T) {
+	dest, err := ioutil.TempFile("", "toolbelt-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	destFilepath := dest.Name()
+	defer os.Remove(destFilepath)
+	_, err = io.Copy(dest, bytes.NewReader([]byte("original content")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	destMode := os.FileMode(0600)
+	err = dest.Chmod(destMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = dest.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	newData, err := os.Open("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ReplaceFile(newData, destFilepath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = newData.Seek(0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	equal, err := FilesEqual("README.md", destFilepath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !equal {
+		t.Fatal("contents differ")
+	}
+	destInfo, err := os.Stat(destFilepath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if destInfo.Mode() != destMode {
+		t.Fatalf("expected file mode to be %v but was %v", destMode, destInfo.Mode())
 	}
 }
