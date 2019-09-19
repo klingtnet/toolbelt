@@ -57,7 +57,7 @@ func TestFilesEqual(t *testing.T) {
 		},
 		"end-differs": {
 			createFile(t, "this is identical"),
-			createFile(t, "this is indentical except the end"),
+			createFile(t, "this is identical except the end"),
 			false,
 			"",
 		},
