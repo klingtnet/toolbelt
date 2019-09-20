@@ -112,10 +112,6 @@ func TestReplaceFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = newData.Seek(0, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
 	equal, err := FilesEqual("README.md", destFilepath)
 	if err != nil {
 		t.Fatal(err)
@@ -129,5 +125,60 @@ func TestReplaceFile(t *testing.T) {
 	}
 	if destInfo.Mode() != destMode {
 		t.Fatalf("expected file mode to be %v but was %v", destMode, destInfo.Mode())
+	}
+}
+
+func TestReplaceFileIfDifferent(t *testing.T) {
+	// cases:
+	// files are different -> change
+	// files are equal -> no change
+
+	tCases := map[string]struct {
+		src, dest    string
+		shouldChange bool
+	}{
+		"different": {
+			createFile(t, "this is new"),
+			createFile(t, "this is old"),
+			true,
+		},
+		"equal": {
+			createFile(t, "equal content"),
+			createFile(t, "equal content"),
+			false,
+		},
+	}
+	for name, tCase := range tCases {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				os.Remove(tCase.src)
+				os.Remove(tCase.dest)
+			}()
+			src, err := os.Open(tCase.src)
+			if err != nil {
+				t.Fatal(err)
+			}
+			changed, err := ReplaceFileIfDifferent(src, tCase.dest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tCase.shouldChange {
+				if !changed {
+					t.Fatal("expected destination to change but did not")
+				}
+				equal, err := FilesEqual(tCase.src, tCase.dest)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !equal {
+					t.Fatal("destination was updated but is not equal to source")
+				}
+			}
+			if !tCase.shouldChange {
+				if changed {
+					t.Fatal("expected not to change but changed")
+				}
+			}
+		})
 	}
 }

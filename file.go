@@ -1,6 +1,7 @@
 package toolbelt
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -121,6 +122,28 @@ func ReplaceFile(data io.Reader, dest string) error {
 	}
 
 	return os.Rename(f.Name(), dest)
+}
+
+// ReplaceFileIfDifferent acts like ReplaceFile but first checks if the content of dest and data
+// are different. Note that this requires to buffer the data Reader in memory, unlike ReplaceFile.
+// If dest was replaced the boolean return value is true and otherwise false.
+func ReplaceFileIfDifferent(data io.Reader, dest string) (bool, error) {
+	destFile, err := os.Open(dest)
+	if err != nil {
+		return false, err
+	}
+	defer destFile.Close()
+	buf := bytes.NewBuffer([]byte{})
+	tr := io.TeeReader(data, buf)
+	equal, err := DefaultBufferedReader.ReaderEqual(tr, destFile)
+	if err != nil {
+		return false, err
+	}
+	if equal {
+		return false, nil
+	}
+	err = ReplaceFile(buf, dest)
+	return err == nil, err
 }
 
 // CloseAndRemove first closes the given file and secondly deletes it.
