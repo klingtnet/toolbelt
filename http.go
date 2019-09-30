@@ -38,7 +38,7 @@ const DefaultTimeout = 10 * time.Second
 func NewHTTPClient(userAgent, version string) *http.Client {
 	cl := &http.Client{
 		Transport: NewDefaultHeaderTransport(userAgent, version),
-		Timeout: DefaultTimeout,
+		Timeout:   DefaultTimeout,
 	}
 	return cl
 }

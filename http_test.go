@@ -19,10 +19,11 @@ func TestDefaultHeaderTransport(t *testing.T) {
 	}))
 
 	cl := NewHTTPClient("test-agent", "test-version")
-	_, err := cl.Get(srv.URL)
+	resp, err := cl.Get(srv.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
+	resp.Body.Close()
 }
 
 func TestClientTimeout(t *testing.T) {
