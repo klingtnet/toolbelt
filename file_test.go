@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func createFile(t *testing.T, content string) string {
@@ -25,7 +27,21 @@ func createFile(t *testing.T, content string) string {
 	return f.Name()
 }
 
+func createRandomFileWithSize(t *testing.T, size int) string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	buf := make([]byte, size)
+	n, err := r.Read(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != size {
+		t.Fatalf("expected to generate %d random bytes but was %d", size, n)
+	}
+	return createFile(t, string(buf))
+}
+
 func TestFilesEqual(t *testing.T) {
+	largeRandomFile := createRandomFileWithSize(t, DefaultReadBufferSize*2)
 	tCases := map[string]struct {
 		fileA, fileB string
 		equal        bool
@@ -37,9 +53,21 @@ func TestFilesEqual(t *testing.T) {
 			true,
 			"",
 		},
+		"equal-larger-than-buffer": {
+			largeRandomFile,
+			largeRandomFile,
+			true,
+			"",
+		},
 		"unequal": {
 			createFile(t, "something"),
 			createFile(t, "different"),
+			false,
+			"",
+		},
+		"unequal-random-content": {
+			createRandomFileWithSize(t, DefaultReadBufferSize),
+			createRandomFileWithSize(t, DefaultReadBufferSize),
 			false,
 			"",
 		},
