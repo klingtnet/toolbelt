@@ -142,6 +142,11 @@ func ReplaceFileIfDifferent(data io.Reader, dest string) (bool, error) {
 	if equal {
 		return false, nil
 	}
+	// read the rest of the source file
+	_, err = io.Copy(ioutil.Discard, tr)
+	if err != nil {
+		return false, err
+	}
 	err = ReplaceFile(buf, dest)
 	return err == nil, err
 }

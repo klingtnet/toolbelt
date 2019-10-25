@@ -170,6 +170,11 @@ func TestReplaceFileIfDifferent(t *testing.T) {
 			createFile(t, "this is old"),
 			true,
 		},
+		"different-larger-than-buffer": {
+			createRandomFileWithSize(t, DefaultReadBufferSize*2),
+			createRandomFileWithSize(t, DefaultReadBufferSize*2),
+			true,
+		},
 		"equal": {
 			createFile(t, "equal content"),
 			createFile(t, "equal content"),
