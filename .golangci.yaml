@@ -1,12 +1,37 @@
+# golangci-lint help linters
 linters:
-  enable-all: true
-  disable:
-    - gochecknoglobals
-    - lll
-    - gochecknoinits
-    - funlen
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - varcheck
+    - bodyclose
+    - dupl
+    - goconst
+    - gofmt
+    - goimports
+    - gosec
+    - interfacer
+    - misspell
+    - scopelint
+    - unconvert
+    - unparam
+
 issues:
+  max-same-issues: 0
   exclude-rules:
+    # Exclude some linters from running on tests files.
     - path: _test\.go
       linters:
+        - errcheck
+        - dupl
+        - gosec
+        - goconst
         - scopelint
+        - bodyclose
